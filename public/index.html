@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ranger Rowan: Ultimate Adventure</title>
+    <title>Ranger Rowan: Master Scout</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -15,186 +15,211 @@
         ::-webkit-scrollbar { display: none; }
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
         .emoji-shadow { text-shadow: 0px 4px 8px rgba(0,0,0,0.2); }
-        /* Ensure footer buttons don't get too small on narrow phones */
         .footer-btn { flex: 1; max-width: 85px; aspect-ratio: 1/1; }
+        .persona-btn { flex: 0 0 auto; transition: all 0.2s ease; }
     </style>
 </head>
 <body class="bg-stone-100 font-sans select-none overflow-x-hidden">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
-        const PERSONAS = {
-            ranger: { id: 'ranger', name: 'Ranger Rick', color: 'bg-green-600', pitch: 1.0, rate: 0.9, emoji: '🤠', catch: "Ranger Rick here! Let's keep the park safe!" },
-            squirrel: { id: 'squirrel', name: 'Silly Sammy', color: 'bg-orange-500', pitch: 1.7, rate: 1.3, emoji: '🐿️', catch: "Squeak! I'm Silly Sammy! Look at all the stuff!" },
-            owl: { id: 'owl', name: 'Wise Owl', color: 'bg-indigo-600', pitch: 0.7, rate: 0.7, emoji: '🦉', catch: "Hoo-hoo... the forest is a great teacher." },
-            bee: { id: 'bee', name: 'Buzzy Bea', color: 'bg-yellow-400', pitch: 1.9, rate: 1.5, emoji: '🐝', catch: "Bzzz-bzzz! Wow! Look at those pretty flowers!" },
-            groundhog: { id: 'groundhog', name: 'Grumpy Gus', color: 'bg-stone-600', pitch: 0.5, rate: 0.8, emoji: '🪵', catch: "Ugh, is it morning? I was busy digging." }
-        };
-
-        const ITEMS = [
-            { id: 'waterfall', name: 'Waterfall', emoji: '💦', bg: 'bg-blue-50', d: { ranger: "Tallulah has 6 waterfalls! Hear the roar?", squirrel: "Splish splash! Don't get me wet!", owl: "Ancient water carving the rock.", bee: "Sparkly diamonds! Bzzz!", groundhog: "Too loud for my nap." }},
-            { id: 'mushroom', name: 'Mushroom', emoji: '🍄', bg: 'bg-red-50', d: { ranger: "Look but don't touch! Nature's recyclers.", squirrel: "A tiny bug umbrella!", owl: "Earth's hidden magic.", bee: "Bzzz! A perfect landing pad!", groundhog: "Mushy and weird. I like roots." }},
-            { id: 'bridge', name: 'Bridge', emoji: '🌉', bg: 'bg-slate-100', d: { ranger: "Hold the railing! It's the Suspension Bridge!", squirrel: "BOING! BOING! It's so wiggly!", owl: "A steel path over the deep gorge.", bee: "Bzzz! A high-flying road!", groundhog: "Too high. My tummy feels funny." }},
-            { id: 'acorn', name: 'Acorn', emoji: '🌰', bg: 'bg-yellow-50', d: { ranger: "This will grow into a giant Oak tree!", squirrel: "MINE! I'm hiding this one later!", owl: "A tiny seed of great strength.", bee: "Bzzz! A very fancy hat!", groundhog: "Crunchy. Good for the teeth." }},
-            { id: 'tracks', name: 'Tracks', emoji: '🐾', bg: 'bg-stone-100', d: { ranger: "Follow the clues! Who walked here?", squirrel: "Maybe a giant squirrel friend?!", owl: "A story written in the mud.", bee: "Bzzz! Why walk? Flying is better!", groundhog: "Hey! Who stepped in my yard?" }},
-            { id: 'feather', name: 'Feather', emoji: '🪶', bg: 'bg-gray-50', d: { ranger: "A bird left a gift! Is it soft?", squirrel: "I wish I had wings to fly home!", owl: "A silent gift from the sky.", bee: "Like a soft cloud! Bzzz!", groundhog: "Achoo! Tickles my nose." }},
-            { id: 'playground', name: 'Playground', emoji: '🛝', bg: 'bg-orange-50', d: { ranger: "Safety first! Have fun on the slides!", squirrel: "I'm the king of the jungle gym!", owl: "Young explorers at play.", bee: "Bzzz! So many colors and kids!", groundhog: "Too much shouting. I'm staying under." }},
-            { id: 'pinecone', name: 'Pinecone', emoji: '🌲', bg: 'bg-emerald-50', d: { ranger: "Pinecones protect seeds from the cold.", squirrel: "These are my snack boxes!", owl: "A woody seed fortress.", bee: "Too scratchy! I like flowers!", groundhog: "They fall on my head. Bonk!" }},
-            { id: 'squirrel', name: 'Squirrel', emoji: '🐿️', bg: 'bg-orange-100', d: { ranger: "They are very busy today.", squirrel: "Hey! Look! It's my cousin!", owl: "A fast forest friend.", bee: "Bzzz! Stop running and smell flowers!", groundhog: "My noisy neighbors." }},
-            { id: 'bird', name: 'Bird', emoji: '🐦', bg: 'bg-sky-50', d: { ranger: "Listen to that song!", squirrel: "I wish I could fly to the top!", owl: "A sky-traveler passing through.", bee: "Bzzz! Watch the big wings!", groundhog: "I prefer the tunnels." }},
-            { id: 'worm', name: 'Worm', emoji: '🪱', bg: 'bg-pink-50', d: { ranger: "Worms help the dirt stay healthy.", squirrel: "Wiggle wiggle! He's slow!", owl: "A snack for the early bird.", bee: "Bzzz! Too dark for me!", groundhog: "My best friends." }},
-            { id: 'flower', name: 'Flower', emoji: '🌸', bg: 'bg-rose-50', d: { ranger: "Bees love these colors!", squirrel: "Smells way better than my tree hole!", owl: "The forest's bright smile.", bee: "OH MY GOSH! A FLOWER! BZZZZ!", groundhog: "I'll eat it later." }},
-            { id: 'clover', name: 'Clover', emoji: '🍀', bg: 'bg-green-50', d: { ranger: "Can you find one with four leaves?", squirrel: "Yummy green snack!", owl: "A lucky carpet.", bee: "Clover nectar is the best!", groundhog: "Breakfast is served." }},
-            { id: 'moss', name: 'Moss', emoji: '🧤', bg: 'bg-emerald-100', d: { ranger: "Feels like a cold sponge!", squirrel: "The world's softest bed!", owl: "Nature's green velvet.", bee: "A soft landing pad!", groundhog: "I use this to line my tunnel." }},
-            { id: 'rock', name: 'Rock', emoji: '🪨', bg: 'bg-stone-200', d: { ranger: "Is it smooth or bumpy?", squirrel: "I hide my best nuts under these!", owl: "A piece of the mountain's heart.", bee: "Bzzz! A warm sun-stone!", groundhog: "I have a big collection." }},
-            { id: 'sticks', name: 'Sticks', emoji: '🪵', bg: 'bg-amber-100', d: { ranger: "Nature's building blocks.", squirrel: "I use these for my nest!", owl: "Fallen limbs of the giants.", bee: "A bridge for ants!", groundhog: "Good for itching my back." }},
-            { id: 'nest', name: 'Nest', emoji: '🪹', bg: 'bg-yellow-100', d: { ranger: "A safe home for babies.", squirrel: "I build my nests high up too!", owl: "A masterwork of twigs.", bee: "Bzzz! A cozy basket!", groundhog: "I like my basement." }},
-            { id: 'leaf', name: 'Leaf', emoji: '🍂', bg: 'bg-orange-50', d: { ranger: "Crunchy under your boots!", squirrel: "CRUNCH! I love that sound!", owl: "The earth's fallen gold.", bee: "A little brown boat!", groundhog: "Too noisy for sneaking." }},
-            { id: 'stump', name: 'Stump', emoji: '🪵', bg: 'bg-stone-300', d: { ranger: "A perfect forest seat.", squirrel: "Leftovers of a giant tree!", owl: "A podium for squirrels.", bee: "Bzzz! A flat island!", groundhog: "A great roof for my tunnel." }},
-            { id: 'stairs', name: 'Stairs', emoji: '🪜', bg: 'bg-gray-200', d: { ranger: "So many steps! Let's count!", squirrel: "I can climb these so fast!", owl: "A long path to the deep.", bee: "Bzzz! Just fly up!", groundhog: "My legs are too short." }},
-            { id: 'beach', name: 'Beach', emoji: '🏖️', bg: 'bg-yellow-100', d: { ranger: "The Tallulah beach! Is it sandy?", squirrel: "I'm staying away from big water!", owl: "Where water meets shore.", bee: "Bzzz! So much sand!", groundhog: "I love digging here." }},
-            { id: 'ant', name: 'Ant', emoji: '🐜', bg: 'bg-stone-200', d: { ranger: "Ants are super strong!", squirrel: "Look at him go!", owl: "A tiny, busy worker.", bee: "Bzzz! The ground-version of me!", groundhog: "Get out of my kitchen!" }},
-            { id: 'fern', name: 'Fern', emoji: '🌿', bg: 'bg-green-100', d: { ranger: "Ferns lived with dinosaurs!", squirrel: "A giant green feather!", owl: "An ancient green fan.", bee: "Bzzz! Prehistoric hideout!", groundhog: "Soft for a nap." }},
-            { id: 'tightrope', name: 'Tightrope', emoji: '🎡', bg: 'bg-purple-100', d: { ranger: "A man walked across the gorge!", squirrel: "Brave as a squirrel!", owl: "A very high path.", bee: "Bzzz! I fly across easily!", groundhog: "No thank you." }},
-            { id: 'bark', name: 'Bark', emoji: '🧱', bg: 'bg-stone-200', d: { ranger: "The tree's protective skin.", squirrel: "Scratch my back!", owl: "The wrinkles of old trees.", bee: "Bzzz! Rough mountains!", groundhog: "Hard and scratchy." }},
-            { id: 'grass', name: 'Grass', emoji: '🌱', bg: 'bg-green-50', d: { ranger: "Nature's green blanket.", squirrel: "Hiding nuts in here!", owl: "A sea of green.", bee: "Bzzz! A bug jungle!", groundhog: "Lunch is everywhere!" }},
-            { id: 'seed', name: 'Seed', emoji: '🌑', bg: 'bg-stone-50', d: { ranger: "The start of something big!", squirrel: "A tiny snack!", owl: "A promise of a new plant.", bee: "Bzzz! Baby tree!", groundhog: "I've got a million." }}
+        // --- MASTER DATA ---
+        const DEFAULT_ITEMS = [
+            { id: 'waterfall', name: 'Waterfall', emoji: '💦', bg: 'bg-blue-50', info: "That water is loud and strong! It travels all the way to the ocean!" },
+            { id: 'mushroom', name: 'Mushroom', emoji: '🍄', bg: 'bg-red-50', info: "Mushrooms help old trees turn back into soil. Look but don't touch!" },
+            { id: 'bridge', name: 'Bridge', emoji: '🌉', bg: 'bg-slate-100', info: "Hold the railing! We are very high up above the river!" },
+            { id: 'acorn', name: 'Acorn', emoji: '🌰', bg: 'bg-yellow-50', info: "This is a baby Oak tree in a hard shell. It is a gift for squirrels!" },
+            { id: 'tracks', name: 'Tracks', emoji: '🐾', bg: 'bg-stone-100', info: "An animal walked right here! Let's follow the clues in the mud." },
+            { id: 'feather', name: 'Feather', emoji: '🪶', bg: 'bg-gray-50', info: "A bird left a gift for you! Is it soft like a cloud?" },
+            { id: 'pinecone', name: 'Pinecone', emoji: '🌲', bg: 'bg-emerald-50', info: "Pinecones protect seeds from the cold winter. They are very prickly!" },
+            { id: 'flower', name: 'Flower', emoji: '🌸', bg: 'bg-rose-50', info: "Flowers are nature's way of saying hello to the bees!" },
+            { id: 'rock', name: 'Rock', emoji: '🪨', bg: 'bg-stone-200', info: "Rocks tell stories about the earth. Is this one smooth or bumpy?" },
+            { id: 'bug', name: 'Bug', emoji: '🐞', bg: 'bg-red-50', info: "Bugs are forest helpers. Give this one a high-five!" },
+            { id: 'bird', name: 'Bird', emoji: '🐦', bg: 'bg-sky-50', info: "Listen to the bird's song! I wish I could fly like that!" },
+            { id: 'worm', name: 'Worm', emoji: '🪱', bg: 'bg-pink-50', info: "Worms are the forest's tiny gardeners. Wiggle wiggle!" },
+            { id: 'clover', name: 'Clover', emoji: '🍀', bg: 'bg-green-50', info: "Clovers make a lucky carpet. Can you find one with four leaves?" },
+            { id: 'moss', name: 'Moss', emoji: '🧤', bg: 'bg-emerald-100', info: "Moss feels like a cold, wet sponge. It's a bed for fairies!" },
+            { id: 'sticks', name: 'Sticks', emoji: '🪵', bg: 'bg-amber-100', info: "Nature's building blocks! You can make a house or a wand!" },
+            { id: 'nest', name: 'Nest', emoji: '🪹', bg: 'bg-yellow-100', info: "A safe, cozy home for baby birds. It's made of twigs and mud!" },
+            { id: 'leaf', name: 'Leaf', emoji: '🍂', bg: 'bg-orange-50', info: "Crunchy under your boots! I love that crunch-crunch sound!" },
+            { id: 'stump', name: 'Stump', emoji: '🪵', bg: 'bg-stone-300', info: "A perfect forest seat! This used to be a very tall tree." },
+            { id: 'stairs', name: 'Stairs', emoji: '🪜', bg: 'bg-gray-200', info: "So many steps! Let's count them together while we climb!" },
+            { id: 'beach', name: 'Beach', emoji: '🏖️', bg: 'bg-yellow-100', info: "A sandy spot near the water! Is the sand warm?" },
+            { id: 'ant', name: 'Ant', emoji: '🐜', bg: 'bg-stone-200', info: "Ants are super strong! They can carry things bigger than them!" },
+            { id: 'fern', name: 'Fern', emoji: '🌿', bg: 'bg-green-100', info: "Ferns lived with the dinosaurs! They look like giant green fans." },
+            { id: 'tightrope', name: 'Tightrope', emoji: '🎡', bg: 'bg-purple-100', info: "A brave man walked across the gorge here! It's a long way down!" },
+            { id: 'bark', name: 'Bark', emoji: '🧱', bg: 'bg-stone-200', info: "The tree's protective skin. It's rough and scratchy!" },
+            { id: 'grass', name: 'Grass', emoji: '🌱', bg: 'bg-green-50', info: "Nature's green blanket. It's very tickly on your toes!" },
+            { id: 'seed', name: 'Seed', emoji: '🌑', bg: 'bg-stone-50', info: "The start of something big! A tiny baby plant in a shell." }
         ];
 
-        const FACTS = ["Forests cover about 31% of the land area on Earth.", "Trees act as the lungs of the planet by producing oxygen.", "Trees help fight climate change by absorbing carbon dioxide.", "Over 80% of land animals and plants live in forests.", "One tree can absorb 150 kg of carbon dioxide per year.", "Forests can actually create their own rain!", "There are over 60,000 known tree species in the world.", "Forests can cool the air by up to 8 degrees!", "Forests help prevent flooding by absorbing rainwater.", "Tree roots anchor the soil, preventing erosion.", "Trees talk to each other through underground fungus networks!", "The Amazon rainforest is the largest in the world.", "Rainforests get rain almost every day!", "The top layer of a forest is called the canopy.", "Deciduous trees lose their leaves in the fall.", "Evergreen trees keep their needles all year.", "You can count tree rings to find out how old a tree is.", "Trees provide humans with fruits, nuts, berries, and syrup!", "Wood from forests is used to build houses and furniture.", "Many medicines are made from forest plants.", "Trees are excellent at storing carbon underground.", "Forests are great for mental health and relaxation.", "You can often find hidden waterfalls in forests.", "Some forests are over 100 million years old!", "Pine trees are known for their strong scent.", "The bark of a tree protects it from fire and insects."];
+        const PERSONAS = {
+            bear: { id: 'bear', name: 'Barnaby Bear', color: 'bg-amber-800', pitch: 0.5, rate: 0.60, emoji: '🐻', intro: "Heeey there, Rowan... Barnaby Bear here... " },
+            fox: { id: 'fox', name: 'Fiona Fox', color: 'bg-orange-600', pitch: 1.4, rate: 0.80, emoji: '🦊', intro: "Ooh! Hi Rowan! I'm Fiona! " },
+            deer: { id: 'deer', name: 'Daisy Deer', color: 'bg-rose-400', pitch: 1.1, rate: 0.65, emoji: '🦌', intro: "Shhh... hello Rowan. Let's be very gentle... " },
+            ranger: { id: 'ranger', name: 'Ranger Rick', color: 'bg-green-700', pitch: 1.0, rate: 0.75, emoji: '🤠', intro: "Ranger Rick here! Reporting for duty! " },
+            squirrel: { id: 'squirrel', name: 'Silly Sammy', color: 'bg-amber-500', pitch: 1.8, rate: 0.85, emoji: '🐿️', intro: "Squeak! Wow! Look at that! Squeak! " }
+        };
 
-        const JOKES = ["Why did the leaf go to the doctor? He was feeling green!", "What's a squirrel's favorite game? Hide and Squeak!", "How do trees get online? They log in!", "Why don't grasshoppers watch soccer? They prefer hop-scotch!", "What do you call a cold forest? For-reezing!", "What did the tree say to the wind? Leaf me alone!", "How do you identify a dogwood tree? By its bark!", "Why did the owl invite his friends over? He didn't want to be owl-by-himself!", "What do you call a bear with no teeth? A gummy bear!", "Why are fish so smart? Because they live in schools!", "What is a frog's favorite drink? Croak-a-cola!", "Why did the mushroom go to the party? Because he was a fun-guy!", "What animal is the best at baseball? A bat!", "How do you get a squirrel to like you? Act like a nut!", "What is a tree's favorite drink? Root beer!", "What is a penguin's favorite relative? Aunt-arctica!", "What kind of flower is on your face? Tulips!", "Where do cows go for a date? To the mooo-vies!", "What did the little flower say to the big flower? Hi bud!", "What kind of tree fits in your hand? A palm tree!", "What did the beaver say to the tree? It was nice gnawing you!", "What do you call an alligator in a vest? An investi-gator!", "What did the ocean say to the beach? Nothing, it just waved!", "How do you make a tissue dance? Put a little boogey in it!"];
+        const MISSIONS = [
+            "Action Mission! Walk like a heavy bear for ten steps! ROAR!",
+            "Action Mission! Hop like a tiny frog five times! Ribbit!",
+            "Detective Mission! Find a leaf that is bigger than your hand!",
+            "Color Mission! Find three different things that are green!",
+            "Sensory Mission! Give a tree a big hug! Is it scratchy?",
+            "Action Mission! Run to the next tree like a cheetah!",
+            "Sensory Mission! Close your eyes... can you feel the wind?",
+            "Action Mission! Spin around like a falling leaf!",
+            "Detective Mission! Find a leaf that was nibbled by a bug!",
+            "Action Mission! Stand on one leg like a sleepy bird!"
+        ];
 
-        const MAP_MISSIONS = ["Find the Suspension Bridge! Can you walk across without wobbling?", "Find the Tightrope Spot! It's 1,000 feet deep!", "Go to the Playground! Find a bird's nest nearby!", "Find the Beach! Is the water cold?", "Find a staircase! Count ten steps!", "Find the Interpretive Center! What is the biggest animal inside?", "Find a Pine tree. Does it smell like Christmas?", "Find a rock colder than your nose!", "Touch a tree. Is it bumpy or smooth?"];
+        const FACTS = ["Forests produce oxygen!", "Trees talk underground!", "A snail can sleep for 3 years!", "One tree can absorb 150kg of CO2!"];
+        const JOKES = ["Why did the leaf go to the doctor? He was feeling green!", "What's a squirrel's game? Hide and Squeak!", "How do trees get online? They log in!"];
+
+        // --- APP ---
 
         function App() {
-            const [found, setFound] = useState(() => JSON.parse(localStorage.getItem('rowan-final-hunt-v8')) || {});
-            const [trashCount, setTrashCount] = useState(() => JSON.parse(localStorage.getItem('rowan-trash-hero')) || 0);
-            const [p, setP] = useState(() => JSON.parse(localStorage.getItem('rowan-p-final-v8')) || PERSONAS.ranger);
+            const [found, setFound] = useState(() => JSON.parse(localStorage.getItem('rowan-f-final')) || {});
+            const [customItems, setCustomItems] = useState(() => JSON.parse(localStorage.getItem('rowan-c-final')) || []);
+            const [trashCount, setTrashCount] = useState(() => JSON.parse(localStorage.getItem('rowan-t-final')) || 0);
+            const [activePersona, setActivePersona] = useState(PERSONAS.bear);
+            const [adminMode, setAdminMode] = useState(false);
+            const [headerTaps, setHeaderTaps] = useState(0);
             const [badge, setBadge] = useState(false);
             const [isQuiet, setIsQuiet] = useState(false);
+            const [newItem, setNewItem] = useState({ name: '', emoji: '', info: '' });
+
+            const allItems = [...DEFAULT_ITEMS, ...customItems];
 
             useEffect(() => {
-                localStorage.setItem('rowan-final-hunt-v8', JSON.stringify(found));
-                localStorage.setItem('rowan-trash-hero', JSON.stringify(trashCount));
-                localStorage.setItem('rowan-p-final-v8', JSON.stringify(p));
-                if (Object.keys(found).length === 12 && !badge) {
+                localStorage.setItem('rowan-f-final', JSON.stringify(found));
+                localStorage.setItem('rowan-c-final', JSON.stringify(customItems));
+                localStorage.setItem('rowan-t-final', JSON.stringify(trashCount));
+                
+                if (Object.keys(found).length >= 10 && !badge) {
                     setBadge(true);
                     confetti({ particleCount: 200, spread: 90 });
-                    speak("ROWAN! YOU ARE THE ULTIMATE MASTER RANGER! YOU FOUND TWELVE TREASURES!");
+                    speak("AMAZING! Rowan, you found TEN treasures! You are a Grand Explorer!", activePersona);
                 }
-            }, [found, trashCount, p]);
+            }, [found, customItems, trashCount]);
 
-            const speak = (text, pOverride) => {
-                const active = pOverride || p;
+            const speak = (text, persona) => {
                 window.speechSynthesis.cancel();
                 const u = new SpeechSynthesisUtterance(text);
-                u.pitch = active.pitch; u.rate = active.rate;
+                const voices = window.speechSynthesis.getVoices();
+                const naturalVoice = voices.find(v => v.name.includes('Natural') || v.name.includes('Premium') || v.name.includes('Google US English')) || voices[0];
+                if (naturalVoice) u.voice = naturalVoice;
+                u.pitch = persona.pitch;
+                u.rate = persona.rate;
                 window.speechSynthesis.speak(u);
             };
 
-            const startListening = () => {
-                setIsQuiet(true);
-                speak("Shhh... Rowan. Close your eyes. Listen to the forest for 5 seconds.");
-                setTimeout(() => { setIsQuiet(false); speak("Okay! What did you hear? Water? Birds? Wind?"); }, 7000);
+            const handlePersonaClick = (p) => {
+                setActivePersona(p);
+                speak(p.intro + " Let's find some treasures together!", p);
             };
 
-            const doTrashHero = () => {
-                setTrashCount(c => c + 1);
-                const msgs = {
-                    ranger: "Trash Hero Rowan! You're keeping Tallulah clean and safe!",
-                    squirrel: "Squeak! Thank you for picking up that litter! My home looks great!",
-                    owl: "Wise choice, Rowan. A true Ranger leaves no trace.",
-                    bee: "Bzzz! Now the flowers look beautiful! You are a hero!",
-                    groundhog: "Clean dirt is the best dirt. Thanks for the help, kid."
-                };
-                speak(msgs[p.id]);
-                confetti({ particleCount: 40, spread: 50, colors: ['#10b981'] });
+            const handleItemClick = (item) => {
+                const isFirst = !found[item.id];
+                setFound(prev => ({ ...prev, [item.id]: (prev[item.id] || 0) + 1 }));
+                const message = isFirst 
+                    ? `${activePersona.intro} Rowan, look! A ${item.name}! ${item.info}`
+                    : `Another ${item.name}! You are a pro at this, Rowan!`;
+                speak(message, activePersona);
             };
-
-            const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
             return (
                 <div className={`min-h-screen pb-52 transition-all ${isQuiet ? 'bg-black' : 'bg-stone-100'}`}>
+                    
+                    {/* Header */}
+                    <div className="bg-white p-3 flex justify-between items-center border-b-2 border-stone-200 sticky top-0 z-[60]">
+                        <h1 onClick={() => { setHeaderTaps(h => h + 1); if(headerTaps >= 4) { setAdminMode(true); setHeaderTaps(0); speak("Admin mode open.", activePersona); } }} 
+                            className="kids-font text-emerald-800 text-lg uppercase">Ranger Rowan</h1>
+                        <button onClick={() => { if(window.confirm("Start over?")) { setFound({}); setTrashCount(0); setBadge(false); } }} 
+                            className="bg-red-50 text-red-500 px-4 py-2 rounded-full text-[12px] kids-font uppercase">New Trip</button>
+                    </div>
+
+                    {/* Admin Panel */}
+                    {adminMode && (
+                        <div className="fixed inset-0 bg-white z-[100] p-6 overflow-y-auto">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold">Admin Panel</h2>
+                                <button onClick={() => setAdminMode(false)} className="bg-black text-white px-4 py-2 rounded-lg">Close</button>
+                            </div>
+                            <form onSubmit={(e) => { e.preventDefault(); setCustomItems([...customItems, {...newItem, id: 'c-'+Date.now(), bg: 'bg-white'}]); setNewItem({name:'', emoji:'', info:''}); speak("Added!", activePersona); }} className="space-y-4 bg-gray-50 p-4 rounded-xl border mb-6">
+                                <input placeholder="Name" className="w-full p-3 border rounded" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} />
+                                <input placeholder="Emoji" className="w-full p-3 border rounded text-2xl" value={newItem.emoji} onChange={e => setNewItem({...newItem, emoji: e.target.value})} />
+                                <textarea placeholder="Description" className="w-full p-3 border rounded" value={newItem.info} onChange={e => setNewItem({...newItem, info: e.target.value})} />
+                                <button type="submit" className="w-full bg-green-600 text-white p-4 rounded-xl font-bold">Add Item</button>
+                            </form>
+                            <div className="space-y-2">
+                                {customItems.map(i => <div key={i.id} className="flex justify-between bg-white p-3 border rounded"><span>{i.emoji} {i.name}</span><button onClick={()=>setCustomItems(customItems.filter(ci=>ci.id!==i.id))} className="text-red-500">Delete</button></div>)}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Persona Bar */}
-                    <div className="bg-white p-4 sticky top-0 z-50 shadow-xl border-b-4 border-stone-200 flex overflow-x-auto gap-4 snap-x">
+                    <div className="bg-white p-4 shadow-xl flex overflow-x-auto gap-4 snap-x border-b-4 border-stone-200">
                         {Object.values(PERSONAS).map(pers => (
-                            <button key={pers.id} onClick={() => { setP(pers); speak(pers.catch, pers); }}
-                                className={`persona-btn snap-center flex flex-col items-center p-4 rounded-[2.5rem] min-w-[100px] transition-all ${p.id === pers.id ? `${pers.color} text-white scale-110 shadow-lg` : 'bg-stone-50'}`}>
+                            <button key={pers.id} onClick={() => handlePersonaClick(pers)}
+                                className={`persona-btn snap-center flex flex-col items-center p-4 rounded-[2.5rem] min-w-[110px] ${activePersona.id === pers.id ? `${pers.color} text-white scale-110 shadow-lg` : 'bg-stone-50 text-stone-400'}`}>
                                 <span className="text-5xl mb-1">{pers.emoji}</span>
-                                <span className="kids-font text-[10px] uppercase tracking-tighter">{pers.name.split(' ')[1]}</span>
+                                <span className="kids-font text-[11px] uppercase whitespace-nowrap">{pers.name.split(' ')[1]}</span>
                             </button>
                         ))}
                     </div>
 
-                    {/* Mission Header */}
+                    {/* Mission Bar */}
                     {!isQuiet && (
                         <div className="p-4">
-                            <button onClick={() => speak(`Mission Time! ${getRandom(MAP_MISSIONS)}`)} 
-                                className="w-full bg-white border-4 border-dashed border-orange-400 p-4 rounded-3xl flex items-center justify-between shadow-md active:scale-95">
-                                <span className="text-4xl">🧭</span>
-                                <span className="kids-font text-orange-800 text-xl uppercase tracking-tighter">Ranger Mission!</span>
-                                <span className="text-4xl">👉</span>
+                            <button onClick={() => speak(MISSIONS[Math.floor(Math.random()*MISSIONS.length)], activePersona)} 
+                                className="w-full bg-white border-4 border-dashed border-orange-400 p-6 rounded-[2rem] flex items-center justify-between shadow-md active:scale-95">
+                                <span className="text-5xl">🧭</span>
+                                <span className="kids-font text-orange-800 text-2xl uppercase">Mission!</span>
+                                <span className="text-4xl animate-pulse">👉</span>
                             </button>
                         </div>
                     )}
 
-                    {/* Treasure Grid */}
+                    {/* Grid */}
                     {!isQuiet && (
                         <div className="p-4 grid-container">
-                            {ITEMS.map(item => (
-                                <button key={item.id} onClick={() => {
-                                    const isFirst = !found[item.id];
-                                    setFound(prev => ({ ...prev, [item.id]: (prev[item.id] || 0) + 1 }));
-                                    speak(isFirst ? `Look Rowan! A ${item.name}! ${item.d[p.id]}` : `Another ${item.name}! Great job!`);
-                                }}
-                                className={`relative aspect-square rounded-[3rem] border-8 flex flex-col items-center justify-center transition-all active:scale-90 ${found[item.id] ? 'border-green-500 bg-white shadow-xl' : `${item.bg} border-white shadow-sm`}`}>
+                            {allItems.map(item => (
+                                <button key={item.id} onClick={() => handleItemClick(item)}
+                                    className={`relative aspect-square rounded-[3rem] border-8 flex flex-col items-center justify-center transition-all active:scale-90 ${found[item.id] ? 'border-green-500 bg-white shadow-xl' : `${item.bg} border-white shadow-sm`}`}>
                                     <span className="text-7xl emoji-shadow mb-2">{item.emoji}</span>
                                     <span className="kids-font text-xl uppercase text-stone-700 tracking-tighter">{item.name}</span>
-                                    {found[item.id] > 0 && (
-                                        <div className="absolute -top-4 -right-4 bg-green-500 text-white w-14 h-14 rounded-full flex items-center justify-center border-4 border-white kids-font text-2xl shadow-lg">
-                                            {found[item.id]}
-                                        </div>
-                                    )}
+                                    {found[item.id] > 0 && <div className="absolute -top-4 -right-4 bg-green-500 text-white w-14 h-14 rounded-full flex items-center justify-center border-4 border-white kids-font text-2xl shadow-lg">{found[item.id]}</div>}
                                 </button>
                             ))}
                         </div>
                     )}
 
-                    {/* Badge Overlay */}
+                    {/* Badge */}
                     {badge && (
                         <div className="fixed inset-0 bg-stone-900/95 z-[100] flex flex-col items-center justify-center p-8 text-center" onClick={() => setBadge(false)}>
-                            <span className="text-[120px] animate-bounce mb-8">🎖️</span>
-                            <h2 className="kids-font text-5xl text-white mb-2 uppercase tracking-widest leading-none">Master Ranger</h2>
-                            <h3 className="kids-font text-8xl text-yellow-400 underline italic leading-none">ROWAN</h3>
-                            <button className="mt-12 bg-white text-stone-900 kids-font text-4xl px-16 py-8 rounded-full shadow-2xl">GO ROWAN!</button>
+                            <span className="text-[140px] animate-bounce mb-8">🎖️</span>
+                            <h2 className="kids-font text-5xl text-white mb-2 uppercase tracking-widest">Master Ranger</h2>
+                            <h3 className="kids-font text-8xl text-yellow-400 underline italic">ROWAN</h3>
                         </div>
                     )}
 
-                    {/* Footer Tools */}
+                    {/* Footer */}
                     <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md p-4 flex justify-around border-t-8 border-stone-200 z-50">
-                        <button onClick={() => speak(`Hey Rowan! Did you know? ${getRandom(FACTS)}`)} 
-                            className="footer-btn bg-blue-500 text-white rounded-3xl flex items-center justify-center shadow-xl active:translate-y-2">
-                            <span className="text-5xl emoji-shadow">🧐</span>
+                        <button onClick={() => speak(`Rowan, did you know? ${FACTS[Math.floor(Math.random()*FACTS.length)]}`, activePersona)} className="footer-btn bg-blue-500 text-white rounded-3xl flex items-center shadow-xl"><span className="text-5xl">🧐</span></button>
+                        <button onClick={() => { setIsQuiet(true); speak("Shh... listen for five seconds.", activePersona); setTimeout(()=>setIsQuiet(false), 7000); }} className="footer-btn bg-indigo-500 text-white rounded-3xl flex items-center shadow-xl"><span className="text-5xl">👂</span></button>
+                        <button onClick={() => { setTrashCount(c=>c+1); speak("Wow! Trash Hero Rowan!", activePersona); confetti(); }} className="footer-btn bg-emerald-500 text-white rounded-3xl flex items-center shadow-xl relative">
+                            <span className="text-5xl">🚮</span>
+                            {trashCount > 0 && <div className="absolute -top-2 -right-2 bg-red-500 text-white w-9 h-9 rounded-full flex items-center justify-center text-sm kids-font border-2 border-white">{trashCount}</div>}
                         </button>
-                        <button onClick={startListening} className="footer-btn bg-indigo-500 text-white rounded-3xl flex items-center justify-center shadow-xl active:translate-y-2">
-                            <span className="text-5xl emoji-shadow">👂</span>
-                        </button>
-                        <button onClick={doTrashHero} className="footer-btn bg-emerald-500 text-white rounded-3xl flex items-center justify-center shadow-xl active:translate-y-2 relative">
-                            <span className="text-5xl emoji-shadow">🚮</span>
-                            {trashCount > 0 && <div className="absolute -top-2 -right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs kids-font border-2 border-white shadow-md">{trashCount}</div>}
-                        </button>
-                        <button onClick={() => speak(getRandom(JOKES))} 
-                            className="footer-btn bg-yellow-400 text-yellow-900 rounded-3xl flex items-center justify-center shadow-xl active:translate-y-2">
-                            <span className="text-5xl emoji-shadow">😂</span>
-                        </button>
+                        <button onClick={() => speak(JOKES[Math.floor(Math.random()*JOKES.length)], activePersona)} className="footer-btn bg-yellow-400 text-yellow-900 rounded-3xl flex items-center shadow-xl"><span className="text-5xl">😂</span></button>
                     </div>
                 </div>
             );
         }
-
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
